@@ -11,7 +11,7 @@ import java.util.Map;
 public class ExchangeRateService {
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public Map<String, Double> getCurrentRates(UserSettings settings){
+    public ExchangeRateResponse getCurrentRates(UserSettings settings){
         String url = "https://api.frankfurter.app/latest?base="
                 +settings.getBaseCurrency()
                 +"&symbols="
@@ -20,10 +20,10 @@ public class ExchangeRateService {
         if (response == null || response.getRates() == null) {
             throw new RuntimeException("Nepodařilo se načíst kurzy z API");
         }
-        return response.getRates();
+        return response;
     }
 
-    public Map<String,Map<String, Double>> getCurrentRatesDates(UserSettings settings, String dateFrom, String dateTo){
+    public ExchangeRateResponseDate getCurrentRatesDates(UserSettings settings, String dateFrom, String dateTo){
         String url = "https://api.frankfurter.app/"
                 +dateFrom + ".."+dateTo
                 +"?base="
@@ -35,6 +35,6 @@ public class ExchangeRateService {
         if (response == null || response.getRates() == null) {
             throw new RuntimeException("Nepodařilo se načíst kurzy z API");
         }
-        return response.getRates();
+        return response;
     }
 }
