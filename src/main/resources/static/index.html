@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Currency Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f5f7; color: #1a1a2e; }
+        nav { background: #fff; border-bottom: 1px solid #ddd; padding: 0 2rem; height: 52px; display: flex; align-items: center; justify-content: space-between; }
+        nav span { font-weight: 600; }
+        nav div { display: flex; gap: 10px; }
+        nav button { padding: 6px 14px; border: 1px solid #ddd; border-radius: 6px; background: none; cursor: pointer; font-size: 13px; }
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+        .card h3 { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        label { font-size: 13px; color: #555; display: block; margin-bottom: 4px; }
+        select, input[type=date] { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .date-row { display: flex; gap: 8px; align-items: center; }
+        .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .chip { font-size: 12px; padding: 5px 11px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9f9; cursor: pointer; user-select: none; }
+        .chip.on { background: #e8f0fb; border-color: #4a90d9; color: #1a56a0; font-weight: 500; }
+        .btn { padding: 10px 20px; font-size: 14px; font-weight: 500; border: none; border-radius: 6px; cursor: pointer; }
+        .btn-primary { background: #1a1a2e; color: #fff; width: 100%; margin-top: 1rem; }
+        .btn-save { background: #f4f5f7; border: 1px solid #ddd; color: #333; font-size: 13px; padding: 6px 14px; border-radius: 6px; cursor: pointer; margin-top: 8px; }
+        .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1rem; }
+        .metric { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 1rem 1.25rem; }
+        .metric-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+        .metric-value { font-size: 24px; font-weight: 600; }
+        .metric-sub { font-size: 12px; color: #aaa; margin-top: 2px; }
+        .metric.s .metric-value { color: #2e7d32; }
+        .metric.w .metric-value { color: #c62828; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; padding: 8px; border-bottom: 1px solid #eee; color: #888; font-weight: 500; }
+        td { padding: 9px 8px; border-bottom: 1px solid #f0f0f0; }
+        .error { background: #fff8f8; border: 1px solid #f5c6c6; border-radius: 8px; padding: 1rem; color: #b71c1c; font-size: 14px; display: none; margin-bottom: 1rem; }
+        #results { display: none; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <span>Currency Analyzer</span>
+    <div>
+        <span style="font-size:13px;color:#555;">admin</span>
+        <button onclick="location.href='/logout'">Odhlásit</button>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="error" id="errorBox">⚠ Nepodařilo se načíst data z API. Zkuste to znovu.</div>
+
+    <div class="card">
+        <h3>Nastavení</h3>
+        <div class="row">
+            <div>
+                <label>Základní měna</label>
+                <select id="base">
+                    <option>AUD</option><option>CAD</option><option>CHF</option>
+                    <option>CNY</option><option>CZK</option><option>DKK</option>
+                    <option selected>EUR</option><option>GBP</option><option>HKD</option>
+                    <option>HUF</option><option>ILS</option><option>JPY</option>
+                    <option>MXN</option><option>NOK</option><option>NZD</option>
+                    <option>PHP</option><option>PLN</option><option>RON</option>
+                    <option>SEK</option><option>SGD</option><option>THB</option>
+                    <option>TRY</option><option>USD</option><option>ZAR</option>
+                </select>
+            </div>
+            <div>
+                <label>Časové období</label>
+                <div class="date-row">
+                    <input type="date" id="dateFrom" value="2025-01-01">
+                    <span>–</span>
+                    <input type="date" id="dateTo" value="2025-01-10">
+                </div>
+            </div>
+        </div>
+
+        <label>Sledované měny <span style="color:#aaa;font-size:12px;">(klikni pro výběr)</span></label>
+        <div class="chips" id="chips"></div>
+
+        <div style="display:flex;gap:10px;margin-top:1rem;">
+            <button class="btn btn-primary" style="flex:1;" onclick="loadData()">Načíst data</button>
+            <button class="btn-save" onclick="saveSettings()">Uložit nastavení</button>
+        </div>
+    </div>
+
+    <div id="results">
+        <div class="metrics">
+            <div class="metric s">
+                <div class="metric-label">Nejsilnější měna</div>
+                <div class="metric-value" id="strongest">–</div>
+                <div class="metric-sub" id="strongestRate"></div>
+            </div>
+            <div class="metric w">
+                <div class="metric-label">Nejslabší měna</div>
+                <div class="metric-value" id="weakest">–</div>
+                <div class="metric-sub" id="weakestRate"></div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Průměr za období</div>
+                <div class="metric-value" id="average">–</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Kurzy</h3>
+            <table>
+                <thead><tr><th>Měna</th><th>Kurz vůči základní</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const CURRENCIES = ["AUD","CAD","CHF","CNY","CZK","DKK","EUR","GBP","HKD","HUF","ILS","JPY","MXN","NOK","NZD","PHP","PLN","RON","SEK","SGD","THB","TRY","USD","ZAR"];
+    const selected = new Set();
+    let chartInstance = null;
+
+    // chipy
+    const chipsEl = document.getElementById("chips");
+    CURRENCIES.forEach(c => {
+      const el = document.createElement("div");
+      el.className = "chip";
+      el.textContent = c;
+      el.onclick = () => {
+        if (selected.has(c)) { selected.delete(c); el.classList.remove("on"); }
+        else { selected.add(c); el.classList.add("on"); }
+      };
+      chipsEl.appendChild(el);
+    });
+
+    // načti uložené nastavení
+    async function loadSettings() {
+      try {
+        const res = await fetch("/api/settings");
+        if (!res.ok) return;
+        const s = await res.json();
+        if (s.baseCurrency) document.getElementById("base").value = s.baseCurrency;
+        if (s.selectedCurrencies) {
+          s.selectedCurrencies.forEach(c => {
+            selected.add(c);
+            document.querySelectorAll(".chip").forEach(el => { if (el.textContent === c) el.classList.add("on"); });
+          });
+        }
+      } catch(e) {}
+    }
+
+    async function saveSettings() {
+    const base = document.getElementById("base").value;
+    const symbols = [...selected].join(",");
+    await fetch(`/api/settings/save?base=${base}&symbols=${symbols}`);
+    alert("Nastavení uloženo!");
+}
+
+    async function loadData() {
+      if (selected.size === 0) { alert("Vyber alespoň jednu měnu."); return; }
+      const base = document.getElementById("base").value;
+      const from = document.getElementById("dateFrom").value;
+      const to = document.getElementById("dateTo").value;
+      const symbols = [...selected].join(",");
+
+      document.getElementById("errorBox").style.display = "none";
+
+      try {
+        const [ratesRes, strongRes, weakRes, avgRes] = await Promise.all([
+          fetch(`/api/rates?base=${base}&symbols=${symbols}`),
+          fetch(`/api/strongest?base=${base}&symbols=${symbols}`),
+          fetch(`/api/weakest?base=${base}&symbols=${symbols}`),
+          fetch(`/api/date?base=${base}&symbols=${symbols}&dateFrom=${from}&dateTo=${to}`)
+        ]);
+
+        const rates = await ratesRes.json();
+        const strong = await strongRes.json();
+        const weak = await weakRes.json();
+        const avgs = await avgRes.json();
+
+        // metriky
+        const strongEntry = Object.entries(strong)[0];
+        const weakEntry = Object.entries(weak)[0];
+
+        document.getElementById("strongest").textContent = strongEntry[0];
+        document.getElementById("strongestRate").textContent = `kurz ${strongEntry[1].toFixed(5)} vůči ${base}`;
+        document.getElementById("weakest").textContent = weakEntry[0];
+        document.getElementById("weakestRate").textContent = `kurz ${weakEntry[1].toFixed(5)} vůči ${base}`;
+
+        // tabulka
+        const tbody = document.getElementById("tableBody");
+        tbody.innerHTML = "";
+        Object.entries(rates).forEach(([c, r]) => {
+          tbody.innerHTML += `<tr><td><strong>${c}</strong></td><td>${r}</td></tr>`;
+        });
+
+        document.getElementById("results").style.display = "block";
+        const avgVals = Object.values(avgs);
+        document.getElementById("average").textContent = avgVals.length
+        ? (avgVals.reduce((a,b) => a+b, 0) / avgVals.length).toFixed(5)
+        : "–";
+
+      } catch(e) {
+        document.getElementById("errorBox").style.display = "block";
+      }
+    }
+
+    loadSettings();
+</script>
+
+</body>
+</html>

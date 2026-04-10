@@ -1,7 +1,7 @@
-package service;
+package org.example.stinsem.service;
 
-import model.ExchangeRateResponse;
-import model.ExchangeRateResponseDate;
+import org.example.stinsem.model.ExchangeRateResponse;
+import org.example.stinsem.model.ExchangeRateResponseDate;
 
 import java.util.HashMap;
 import java.util.Map;

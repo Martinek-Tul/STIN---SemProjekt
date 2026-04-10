@@ -1,15 +1,18 @@
-package model;
+package org.example.stinsem.model;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.List;
 
 public class UserSettings {
     @Getter
-    private final String baseCurrency;
+    @Setter
+    private String baseCurrency;
     @Getter
-    private final List<String> selectedCurrencies;
+    @Setter
+    private List<String> selectedCurrencies;
 
     private static final List<String> availableCurrencies = List.of(
             "AUD", "CAD", "CHF", "CNY", "CZK", "DKK", "EUR", "GBP",

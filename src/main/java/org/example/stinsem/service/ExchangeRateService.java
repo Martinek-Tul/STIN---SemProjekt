@@ -1,11 +1,9 @@
-package service;
-import model.ExchangeRateResponseDate;
-import model.UserSettings;
-import model.ExchangeRateResponse;
+package org.example.stinsem.service;
+import org.example.stinsem.model.ExchangeRateResponseDate;
+import org.example.stinsem.model.UserSettings;
+import org.example.stinsem.model.ExchangeRateResponse;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.Map;
 
 @RestController
 public class ExchangeRateService {

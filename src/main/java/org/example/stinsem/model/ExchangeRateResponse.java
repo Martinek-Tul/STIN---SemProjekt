@@ -1,4 +1,4 @@
-package model;
+package org.example.stinsem.model;
 
 import java.util.Map;
 import lombok.Getter;
