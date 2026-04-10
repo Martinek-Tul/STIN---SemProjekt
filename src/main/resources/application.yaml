@@ -1,3 +1,7 @@
 spring:
   application:
     name: STIN-Sem
+  security:
+    user:
+      name: admin
+      password: heslo123
